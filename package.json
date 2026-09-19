@@ -1,0 +1,22 @@
+{
+  "name": "bdag-pay",
+  "version": "0.1.0",
+  "description": "Payment links, merchant checkout and tipping for BlockDAG (EVM-compatible, chain ID 1404)",
+  "license": "MIT",
+  "scripts": {
+    "compile": "hardhat compile",
+    "test": "hardhat test",
+    "node": "hardhat node",
+    "deploy:local": "hardhat run scripts/deploy.js",
+    "deploy:testnet": "hardhat run scripts/deploy.js --network bdagTestnet",
+    "deploy:mainnet": "hardhat run scripts/deploy.js --network bdagMainnet"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "dotenv": "^16.4.5",
+    "hardhat": "^2.22.10"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^5.0.2"
+  }
+}

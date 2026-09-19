@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BDAG Pay — Payment Links & Merchant Checkout</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  :root {
+    --canvas: #0B0D14;
+    --card: #121522;
+    --card-2: #171B2C;
+    --border: #262C42;
+    --text: #F4F6FF;
+    --muted: #8A92B0;
+    --purple: #7C5CFF;
+    --cyan: #2EE6D6;
+    --glow-purple: rgba(124, 92, 255, 0.35);
+    --glow-cyan: rgba(46, 230, 214, 0.25);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--canvas);
+    color: var(--text);
+    font-family: "Inter", "Segoe UI", system-ui, sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  .bg-glow {
+    position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    background:
+      radial-gradient(600px 400px at 12% -5%, var(--glow-purple), transparent 60%),
+      radial-gradient(500px 350px at 90% 10%, var(--glow-cyan), transparent 65%),
+      radial-gradient(700px 500px at 50% 110%, rgba(124,92,255,0.15), transparent 70%);
+  }
+  .wrap { position: relative; z-index: 1; max-width: 1080px; margin: 0 auto; padding: 0 24px 80px; }
+
+  header { display: flex; justify-content: space-between; align-items: center; padding: 28px 0; }
+  .logo { display: flex; align-items: center; gap: 12px; }
+  .logo-mark {
+    width: 40px; height: 40px; border-radius: 10px;
+    background: linear-gradient(135deg, var(--purple), var(--cyan));
+    box-shadow: 0 0 24px var(--glow-purple);
+    display: grid; place-items: center; font-weight: 800; color: #fff;
+  }
+  .logo-name { font-size: 20px; font-weight: 800; letter-spacing: 0.5px; }
+  .logo-name span { color: var(--cyan); }
+  .chain-badge {
+    font-size: 12px; color: var(--muted); border: 1px solid var(--border);
+    padding: 7px 14px; border-radius: 999px; background: var(--card);
+  }
+  .chain-badge b { color: var(--cyan); font-weight: 600; }
+
+  .hero { padding: 56px 0 40px; }
+  .eyebrow {
+    display: inline-block; font-size: 12px; letter-spacing: 2px; text-transform: uppercase;
+    color: var(--cyan); border: 1px solid rgba(46,230,214,0.3); border-radius: 999px;
+    padding: 6px 14px; margin-bottom: 20px; background: rgba(46,230,214,0.06);
+  }
+  h1 { font-size: 46px; line-height: 1.1; font-weight: 800; letter-spacing: -1px; max-width: 720px; }
+  h1 .grad {
+    background: linear-gradient(90deg, var(--purple), var(--cyan));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .hero p { margin-top: 18px; color: var(--muted); font-size: 17px; max-width: 640px; line-height: 1.6; }
+
+  .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin: 40px 0 8px; }
+  .tile {
+    background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 20px;
+  }
+  .tile .k { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+  .tile .v { font-size: 19px; font-weight: 700; margin-top: 8px; word-break: break-all; }
+  .tile .v small { color: var(--muted); font-weight: 400; }
+
+  h2 { font-size: 26px; font-weight: 800; margin: 56px 0 6px; letter-spacing: -0.5px; }
+  .sub { color: var(--muted); margin-bottom: 24px; line-height: 1.5; }
+
+  .demo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  @media (max-width: 820px) { .demo-grid { grid-template-columns: 1fr; } h1 { font-size: 34px; } }
+
+  .panel {
+    background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 24px;
+  }
+  .panel h3 { font-size: 15px; font-weight: 700; margin-bottom: 16px; color: var(--text); }
+  .panel h3 em { font-style: normal; color: var(--purple); }
+  label { display: block; font-size: 12px; color: var(--muted); margin: 14px 0 6px; letter-spacing: 0.5px; }
+  input, select, textarea {
+    width: 100%; background: var(--canvas); color: var(--text);
+    border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px;
+    font-size: 15px; outline: none; font-family: inherit;
+  }
+  input:focus, select:focus, textarea:focus { border-color: var(--purple); box-shadow: 0 0 0 3px rgba(124,92,255,0.15); }
+  textarea { resize: vertical; min-height: 60px; }
+
+  .btn {
+    width: 100%; margin-top: 18px; padding: 13px; border: none; border-radius: 10px; cursor: pointer;
+    font-size: 15px; font-weight: 700; color: #fff; font-family: inherit;
+    background: linear-gradient(135deg, var(--purple), #5A3EF0);
+    box-shadow: 0 0 24px var(--glow-purple); transition: transform 0.15s, box-shadow 0.15s;
+  }
+  .btn:hover { transform: translateY(-1px); box-shadow: 0 6px 30px var(--glow-purple); }
+  .btn.cyan { background: linear-gradient(135deg, #14C8BA, var(--cyan)); color: #06231F; box-shadow: 0 0 24px var(--glow-cyan); }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+  .link-card {
+    margin-top: 20px; background: var(--card-2); border: 1px solid var(--border);
+    border-radius: 14px; padding: 20px; display: none;
+  }
+  .link-card.show { display: block; animation: pop 0.25s ease; }
+  @keyframes pop { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  .link-head { display: flex; gap: 20px; align-items: flex-start; }
+  #qrbox { background: #fff; padding: 10px; border-radius: 10px; width: 132px; height: 132px; flex-shrink: 0; }
+  #qrbox img, #qrbox canvas { width: 112px !important; height: 112px !important; }
+  .link-meta { flex: 1; min-width: 0; }
+  .link-amount { font-size: 28px; font-weight: 800; }
+  .link-amount small { font-size: 14px; color: var(--muted); font-weight: 400; }
+  .link-url {
+    margin-top: 8px; font-size: 13px; color: var(--cyan); word-break: break-all;
+    background: var(--canvas); border: 1px solid var(--border); padding: 8px 10px; border-radius: 8px;
+  }
+  .link-memo { margin-top: 10px; font-size: 13px; color: var(--muted); }
+
+  .receipt { margin-top: 18px; border: 1px solid rgba(46,230,214,0.35); background: rgba(46,230,214,0.05); border-radius: 14px; padding: 20px; display: none; }
+  .receipt.show { display: block; animation: pop 0.25s ease; }
+  .receipt h4 { color: var(--cyan); font-size: 14px; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 12px; }
+  .rrow { display: flex; justify-content: space-between; font-size: 14px; padding: 7px 0; border-bottom: 1px dashed var(--border); }
+  .rrow:last-child { border: none; }
+  .rrow .rk { color: var(--muted); } .rrow .rv { font-weight: 600; text-align: right; word-break: break-all; max-width: 60%; }
+
+  .console {
+    margin-top: 40px; background: #07090F; border: 1px solid var(--border); border-radius: 14px;
+    padding: 18px 20px; font-family: "SF Mono", "Consolas", monospace; font-size: 12.5px;
+  }
+  .console .cbar { color: var(--muted); font-size: 11px; letter-spacing: 1px; margin-bottom: 10px; }
+  #log .line { padding: 3px 0; color: #AAB2D0; }
+  #log .line b { color: var(--cyan); font-weight: 400; }
+  #log .line .evt { color: var(--purple); }
+
+  .tip-chips { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 6px; }
+  .chip {
+    flex: 1; min-width: 90px; background: var(--canvas); border: 1px solid var(--border);
+    border-radius: 10px; padding: 12px; text-align: center; cursor: pointer; font-weight: 700;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .chip.sel, .chip:hover { border-color: var(--cyan); box-shadow: 0 0 16px var(--glow-cyan); color: var(--cyan); }
+  .tip-result { margin-top: 14px; font-size: 13px; color: var(--muted); min-height: 20px; }
+  .tip-result b { color: var(--cyan); }
+
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th { text-align: left; color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: 1px; padding: 12px; border-bottom: 1px solid var(--border); }
+  td { padding: 14px 12px; border-bottom: 1px solid var(--border); }
+  code { font-family: "SF Mono", "Consolas", monospace; color: var(--cyan); font-size: 13px; }
+  code.p { color: var(--purple); }
+
+  footer { margin-top: 64px; color: var(--muted); font-size: 13px; border-top: 1px solid var(--border); padding-top: 24px; line-height: 1.7; }
+  footer b { color: var(--text); }
+
+  .ok { color: var(--cyan); }
+  .err { color: #FF6B7A; }
+</style>
+</head>
+<body>
+<div class="bg-glow"></div>
+<div class="wrap">
+
+  <header>
+    <div class="logo">
+      <div class="logo-mark">B</div>
+      <div class="logo-name">BDAG<span>Pay</span></div>
+    </div>
+    <div class="chain-badge">BlockDAG Mainnet • Chain ID <b>1404</b></div>
+  </header>
+
+  <section class="hero">
+    <div class="eyebrow">Payment links & merchant checkout</div>
+    <h1>Get paid on BlockDAG with a <span class="grad">link or QR code</span>.</h1>
+    <p>A merchant creates a payment link, the customer scans it and pays in BDAG or a stablecoin,
+    and the blockchain holds the receipt. Zero custody: funds move payer to merchant in one transaction.</p>
+  </section>
+
+  <div class="tiles">
+    <div class="tile"><div class="k">Network</div><div class="v">BlockDAG Mainnet <small>• BDAG</small></div></div>
+    <div class="tile"><div class="k">RPC</div><div class="v"><small>https://rpc.welshdag.trade</small></div></div>
+    <div class="tile"><div class="k">Chain ID</div><div class="v">1404 <small>(testnet: 1043)</small></div></div>
+    <div class="tile"><div class="k">Explorer</div><div class="v"><small>explorer.welshdag.co.uk</small></div></div>
+  </div>
+
+  <h2>Live demo</h2>
+  <p class="sub">Runs the exact logic of <code class="p">PaymentLinks.sol</code> and <code class="p">TipJar.sol</code> in
+  simulation mode — the same create / pay / receipt flow you'll call from your dApp frontend.</p>
+
+  <div class="demo-grid">
+    <div class="panel">
+      <h3>Merchant &mdash; <em>createLink()</em></h3>
+      <label for="m-amount">Amount</label>
+      <input id="m-amount" type="number" min="0" step="0.01" value="25.00">
+      <label for="m-token">Currency</label>
+      <select id="m-token">
+        <option value="BDAG">BDAG (native)</option>
+        <option value="tUSDC">tUSDC (stablecoin)</option>
+      </select>
+      <label for="m-memo">Memo (shown at checkout &amp; on receipt)</label>
+      <textarea id="m-memo">Invoice #1042 — coffee order</textarea>
+      <button class="btn" id="btn-create">Create payment link</button>
+    </div>
+
+    <div class="panel">
+      <h3>Customer &mdash; <em>pay(id)</em></h3>
+      <div id="checkout-empty" style="color:var(--muted);font-size:14px;line-height:1.6">
+        No link yet. Create one on the left — the checkout and QR appear here, like the page a
+        customer opens from your <code>pay.example/checkout/&lt;id&gt;</code> link.
+      </div>
+      <div class="link-card" id="link-card">
+        <div class="link-head">
+          <div id="qrbox"></div>
+          <div class="link-meta">
+            <div class="link-amount" id="c-amount"></div>
+            <div class="link-url" id="c-url"></div>
+            <div class="link-memo" id="c-memo"></div>
+          </div>
+        </div>
+        <button class="btn cyan" id="btn-pay">Pay from wallet</button>
+      </div>
+      <div class="receipt" id="receipt">
+        <h4>✓ Payment receipt</h4>
+        <div id="receipt-body"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="margin-top:24px">
+    <h3>Creator tips &mdash; <em>TipJar.tip(message)</em></h3>
+    <label>Tip amount (BDAG)</label>
+    <div class="tip-chips">
+      <div class="chip sel" data-v="1">1</div>
+      <div class="chip" data-v="5">5</div>
+      <div class="chip" data-v="10">10</div>
+      <div class="chip" data-v="25">25</div>
+    </div>
+    <label for="tip-msg">Message</label>
+    <input id="tip-msg" value="Great stream! 🎉">
+    <button class="btn" id="btn-tip">Send tip</button>
+    <div class="tip-result" id="tip-result"></div>
+  </div>
+
+  <div class="console">
+    <div class="cbar">// CONTRACT EVENTS (simulation of explorer.welshdag.co.uk log)</div>
+    <div id="log"><div class="line">-- waiting for transactions --</div></div>
+  </div>
+
+  <h2>Contract reference</h2>
+  <p class="sub">Deployed addresses go in the config block at the top of this file once you run
+  <code>npm run deploy:testnet</code>.</p>
+  <div class="panel" style="overflow-x:auto">
+    <table>
+      <tr><th>Contract</th><th>Function</th><th>Notes</th></tr>
+      <tr><td><code>PaymentLinks</code></td><td><code class="p">createLink(amount, token, memo)</code></td><td>token <code>address(0)</code> = native BDAG, else ERC20/stablecoin</td></tr>
+      <tr><td></td><td><code class="p">pay(id)</code></td><td>Native checkout — must send the exact amount, single-use</td></tr>
+      <tr><td></td><td><code class="p">payToken(id)</code></td><td>Stablecoin checkout — needs a prior ERC20 approve</td></tr>
+      <tr><td></td><td><code class="p">Paid</code> event</td><td>The onchain receipt: id, payer, payee, amount, token, memo, timestamp</td></tr>
+      <tr><td><code>TipJar</code></td><td><code class="p">tip(message)</code></td><td>Native BDAG tip, forwarded to the creator instantly</td></tr>
+      <tr><td></td><td><code class="p">tipToken(token, amount, message)</code></td><td>Stablecoin tip with ERC20 approve</td></tr>
+    </table>
+  </div>
+
+  <footer>
+    <p><b>BDAG Pay</b> — example project for testing on BlockDAG mainnet, chain ID 1404 (community RPC/ explorer by WelshDAG).
+    Network details per official docs; verify before deploying.</p>
+    <p>Not audited. Simulation only until you connect real addresses and MetaMask. No custody,
+    no refunds — funds transfer directly payer to merchant.</p>
+  </footer>
+</div>
+
+<script>
+/* ------------------------------------------------------------------
+   CONFIG — replace with deployed addresses + ethers.js to go live.
+   ------------------------------------------------------------------ */
+const CONFIG = {
+  network: { name: "BlockDAG Mainnet (WelshDAG RPC)", chainId: 1404, rpc: "https://rpc.welshdag.trade", explorer: "https://explorer.welshdag.co.uk" },
+  paymentLinks: "0x__DEPLOYED_ADDRESS__",
+  tipJar: "0x__DEPLOYED_ADDRESS__",
+  simulate: true
+};
+
+// --- Simulation of PaymentLinks.sol -----------------------------------
+let nextId = 1;
+const links = {};
+const short = a => a.slice(0, 6) + "…" + a.slice(-4);
+const MERCHANT = "0x9F1b…Merchant", CUSTOMER = "0x4A7c…Customer";
+
+const logEl = document.getElementById("log");
+function logEvent(name, args) {
+  const line = document.createElement("div");
+  line.className = "line";
+  line.innerHTML = `<span class="evt">event ${name}(</span>${args.join(", ")}<span class="evt">)</span>`;
+  logEl.appendChild(line);
+  logEl.scrollTop = logEl.scrollHeight;
+}
+function tokenAddr(sym) { return sym === "BDAG" ? "address(0)" : "tUSDC"; }
+
+// --- Merchant: createLink ---
+document.getElementById("btn-create").addEventListener("click", () => {
+  const amount = parseFloat(document.getElementById("m-amount").value);
+  const token = document.getElementById("m-token").value;
+  const memo = document.getElementById("m-memo").value.trim();
+  if (!(amount > 0)) return alert("amount must be > 0");
+
+  const id = nextId++;
+  links[id] = { payee: MERCHANT, amount, token, memo, paid: false, payer: null, paidAt: null };
+  logEvent("LinkCreated", [id, MERCHANT, amount + " " + token, tokenAddr(token), `"${memo}"`]);
+
+  // Build checkout view
+  document.getElementById("checkout-empty").style.display = "none";
+  const card = document.getElementById("link-card");
+  card.classList.add("show");
+  document.getElementById("c-amount").innerHTML = `${amount} <small>${token}</small>`;
+  document.getElementById("c-url").textContent = `https://pay.example/checkout/${id}`;
+  document.getElementById("c-memo").textContent = memo;
+  document.getElementById("btn-pay").disabled = false;
+  document.getElementById("receipt").classList.remove("show");
+
+  const qrbox = document.getElementById("qrbox");
+  qrbox.innerHTML = "";
+  try {
+    new QRCode(qrbox, { text: `https://pay.example/checkout/${id}`, width: 112, height: 112 });
+  } catch {
+    qrbox.textContent = "QR";
+  }
+});
+
+// --- Customer: pay(id) ---
+document.getElementById("btn-pay").addEventListener("click", () => {
+  const id = nextId - 1;
+  const l = links[id];
+  if (!l) return;
+  if (l.paid) return alert("link already paid");
+  l.paid = true;
+  l.payer = CUSTOMER;
+  l.paidAt = new Date().toISOString().replace("T", " ").slice(0, 19);
+  logEvent("Paid", [id, CUSTOMER, l.payee, l.amount + " " + l.token, tokenAddr(l.token), `"${l.memo}"`, "ts"]);
+
+  const body = document.getElementById("receipt-body");
+  body.innerHTML = [
+    ["Link ID", "#" + id],
+    ["Amount", l.amount + " " + l.token],
+    ["Paid by", l.payer],
+    ["Paid to", l.payee],
+    ["Memo", l.memo],
+    ["Status", '<span class="ok">Confirmed ✓</span>'],
+    ["Receipt", `Paid event #${id} on explorer.welshdag.co.uk`],
+    ["Paid at", l.paidAt]
+  ].map(([k, v]) => `<div class="rrow"><span class="rk">${k}</span><span class="rv">${v}</span></div>`).join("");
+  document.getElementById("receipt").classList.add("show");
+  document.getElementById("btn-pay").disabled = true;
+});
+
+// --- TipJar ---
+let tipVal = 1;
+document.querySelectorAll(".chip").forEach(ch => {
+  ch.addEventListener("click", () => {
+    document.querySelectorAll(".chip").forEach(c => c.classList.remove("sel"));
+    ch.classList.add("sel");
+    tipVal = parseFloat(ch.dataset.v);
+  });
+});
+document.getElementById("btn-tip").addEventListener("click", () => {
+  const msg = document.getElementById("tip-msg").value.trim();
+  logEvent("Tip", [CUSTOMER, MERCHANT, tipVal + " BDAG", "address(0)", `"${msg}"`]);
+  document.getElementById("tip-result").innerHTML =
+    `<b>✓ ${tipVal} BDAG sent</b> — Tip event written onchain, funds forwarded straight to the creator.`;
+});
+</script>
+</body>
+</html>
