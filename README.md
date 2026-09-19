@@ -28,12 +28,16 @@ Design choices that keep it safe and simple:
 
 ## BlockDAG network details
 
-Verify against the official docs before deploying: https://docs.blockdagnetwork.io
+Verify chain ID against official docs: https://docs.blockdagnetwork.io
 
-| Network | Chain ID | RPC | Explorer | Symbol |
+**Mainnet (1404) — use community RPCs only.** Do **not** use `https://rpc.bdagscan.com` for mainnet; it is a diverged fork that may still report chain ID 1404.
+
+| Network | Chain ID | RPC (examples) | Explorer | Symbol |
 |---|---|---|---|---|
-| Mainnet | 1404 | https://rpc.welshdag.trade (community) | https://explorer.welshdag.co.uk (community) | BDAG |
+| Mainnet (community) | 1404 | `https://rpc.blockdag.engineering/` · `https://rpc.dvdmining.com` · `https://rpc.east.bdag-us.org/` · `https://rpc.west.bdag-us.org/` · `https://rpc.capedag.com/` | https://explorer.blockdag.engineering/ | BDAG |
 | Testnet (Awakening) | 1043 | confirm via docs/chainlist | https://awakening.bdagscan.com | BDAG |
+
+Optional mainnet failover: `https://rpc.welshdag.trade/`. Full improvement checklist for AI assistants: [`docs/improve-and-deploy.md`](docs/improve-and-deploy.md).
 
 Add testnet to MetaMask: Custom RPC, Chain ID `1043`, symbol `BDAG`. Since BlockDAG
 is EVM-compatible, MetaMask, Truffle, Hardhat, Foundry and Remix all work as-is.
@@ -92,3 +96,7 @@ block lets you point it at deployed addresses when you wire up a real frontend
 ## License
 
 MIT
+
+## Docs
+
+- [`docs/improve-and-deploy.md`](docs/improve-and-deploy.md) — AI/human checklist: community RPCs, mainnet deploy (no TestUSDC), dashboard wiring, optional static hosting
